@@ -1,62 +1,148 @@
 #include <iostream>
 #include <string>
+#include<vector>
 
 class big_integer {
 private:
-	int number_;
-	int* ptr_;
+	std::string digits_ = "";
+	int length;
+
 public:
-	//конструктор
-	big_integer(std::string str) {
-		number_ = stoi(str);
-		ptr_ = new int[1];
+	//конструктор_1
+	big_integer(std::string str): digits_{str}
+	{
+		length = str.length();
+	}
+	//конструктор_2
+	big_integer() {
+
 	}
 	//деструктор
 	~big_integer() {
-		delete[] ptr_;
+		//delete[] ptr_;
 	}
 	//конструктор перемещения (move ctr)
 	big_integer(big_integer&& other) {
-		number_ = other.number_;
-		ptr_ = other.ptr_;
-		other.ptr_ = nullptr;
+		
+		int n = digits_.size();
+		for (int i = n - 1; i >= 0; --i) {
+			digits_.push_back(other.digits_[i]);
+		}
+		digits_ = other.digits_;
+		other.digits_ = nullptr;
 	}
 	//перемещающий оператор присваивания (move assignment)
 	big_integer& operator=(big_integer&& other) {
 		if (this == &other)
 			return *this;
-		delete[] ptr_;
-		number_ = other.number_;	
-		ptr_ = other.ptr_;
-		other.ptr_ = nullptr;
+		length = other.length;
+		digits_ = other.digits_;
+		other.digits_ = nullptr;
 		return *this;
 	}
 
 	//оператор сложения двух больших чисел
 	big_integer operator+(const big_integer& other) {
-		number_ = number_ + other.number_;
-		std::string str_param = std::to_string(number_);
-		return big_integer(str_param);
+		int max_length = 0;
+		if (length <= other.length)
+			int max_length = other.length;
+		else max_length = length;
+
+		std::string res = "";
+		int carry = 0; //carry flag
+		int last_a = 0, last_b = 0;
+
+		//sum
+		for (int i = 0; i < max_length; ++i) {
+			last_a = i < length ? digits_[length - i] - '0' : 0;
+			last_b = i < other.length ? other.digits_[other.length - i] - '0' : 0;
+			//sum of two last digits
+			res = char((last_a + last_b + carry) % 10 + '0') + res;
+			//if num > 9 then carry will be 1st digit
+			carry = (last_a + last_b + carry) / 10;
+		}
+		if (carry)
+			res = char(carry + '0') + res;
+		return big_integer(res);
 	}
 
-	//оператор умножения на число (справа)
-	big_integer operator*(const int& value) {
-		number_ = number_ * value;
-		std::string str_param = std::to_string(number_);
-		return big_integer(str_param);
+	//оператор умножения на полудлинное число (справа)
+	big_integer operator*(const long long& value) {
+		int carry = 0;
+		int last_digit;
+		std::string res = "";
+		for (int i = digits_.size() - 1; i >= 0; --i) {
+			last_digit = int(digits_[i] - '0') * value + carry;
+			carry = last_digit / 10;
+			res = char(last_digit % 10 + '0') + res;
+		}
+		while (carry)
+			res = char(carry % 10 + '0') + res;
+		carry /= 10;
+		return res;
 	}
 
-	//оператор умножения на число (слева)
-	friend big_integer operator*(int value, big_integer& other) {
-		int res = value * other.number_;
-		std::string str = std::to_string(res);
-		return big_integer(str);
-	};
+	////оператор умножения на полудлинное число (слева)
+	//friend big_integer operator*(big_integer& left, big_integer& right) {
+	//	int BASE = 1e9;
+	//	std::vector<int> vc;
+	//	big_integer res;
+	//	vc.resize(left.digits_.size()+ right.digits_.size());
+	//	/*if (vc.size() == 1) {
+	//		res = left.digits_[0] * right.digits_[0];
+	//		return big_integer(res);
+	//	}
+	//	*/
+	//	for (int i = 0; i < left.digits_.size(); ++i) {
+	//		int carry = 0;
+	//		for (int j = 0; j < right.digits_.size(); ++j) {
+	//			vc[i + j] += carry + left.digits_[i] * right.digits_[j];
+	//			carry = vc[i + j] / 10;
+	//			vc[i + j] %= 10;
+	//			}
+	//		vc.push_back(carry);
+	//	}
+	//	res.digits_.resize(vc.size());
+	//	for (int i = 0; i < vc.size(); ++i)
+	//		res.digits_[i] = vc[i];
+	//	return res;
+	//};
+
+	//оператор умножения двух больших чисел
+	friend big_integer& operator*=(big_integer& left, const big_integer& right) {
+		if (NULL(left) || NULL(right))
+			return left;
+		int n = left.digits_.size(), m = right.digits_.size();
+		std::vector<int> vi(n + m, 0);
+		for (int i = 0; i < n; ++i) {
+			for (int j = 0; j < m; ++j) {
+				vi[i + j] += (left.digits_[i]) * (right.digits_[j]);
+			}
+		}
+		n += m;
+		left.digits_.resize(vi.size());
+		for (int k, i = 0, t = 0; i < n; ++i) {
+			k = t + vi[i];
+			vi[i] = k % 10;
+			t = k / 10;
+			left.digits_[i] = vi[i];
+		}
+		for (int i = n - 1; i >= 1 && !vi[i]; ++i)
+			left.digits_.pop_back();
+		return left;
+	}
+
+	friend big_integer operator* (const big_integer& left, const big_integer& right) {
+		big_integer temp;
+		temp.digits_ = left.digits_;
+		temp *= right;
+		return temp;
+	}
 
 	//перегрузка оператора вывода на экран
 	friend std::ostream& operator << (std::ostream& os, const big_integer& bi)
 	{
-		return os << bi.number_ << std::endl;
+		return os << bi.digits_ << std::endl;
 	}
 };
 
@@ -64,10 +150,11 @@ int main() {
 
 	auto number1 = big_integer("114575");
 	auto number2 = big_integer("78524");
-	auto result = number1 + number2; //number1 changed
-	auto mult0 = number1*3;
-	auto mult1 = 10 * number2;
-	std::cout << result; // 193099
-	std::cout << "muliply_0: " << mult0 << "multiply_1: " << mult1 << std::endl;
+	auto result = number1 + number2; 
+	auto num_1 = big_integer("6459134876312645915375645915243562819842157684951435975462712564565467216417897215674812546818645 ");
+	auto num_2 = big_integer("5643269487");
+	auto mult0 = num_1 * num_2;
+	std::cout << '\n' << result << std::endl; // 193099
+	std::cout << "mult_0: " << mult0 << std::endl;
 	return 0;
 }
