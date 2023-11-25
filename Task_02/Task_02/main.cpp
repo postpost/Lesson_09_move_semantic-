@@ -62,16 +62,17 @@ public:
 	//оператор умножения на полудлинное число (справа)
 	big_integer operator*(const long long& value) {
 		int carry = 0;
-		int last_digit;
+		long long last_digit = 0;
 		std::string res = "";
 		for (int i = digits_.size() - 1; i >= 0; --i) {
 			last_digit = int(digits_[i] - '0') * value + carry;
 			carry = last_digit / 10;
 			res = char(last_digit % 10 + '0') + res;
 		}
-		while (carry)
+		while (carry) {
 			res = char(carry % 10 + '0') + res;
-		carry /= 10;
+			carry /= 10;
+		}
 		return res;
 	}
 
@@ -85,9 +86,10 @@ public:
 			carry = last_digit / 10;
 			res = char(last_digit % 10 + '0') + res;
 		}
-		while (carry)
+		while (carry) {
 			res = char(carry % 10 + '0') + res;
-		carry /= 10;
+			carry /= 10;
+		}
 		return res;
 	};
 
@@ -117,7 +119,9 @@ public:
 		}
 		for (int i = n - 1; i >= 1 && !vi[i]; ++i)
 			left.digits_.pop_back();
+		/*std::cout << left.digits_.size() << std::endl;
 		left.digits_.shrink_to_fit();
+		std::cout << left.digits_.size() << std::endl;*/
 		return left;
 	}
 
@@ -140,8 +144,8 @@ int main() {
 	auto number1 = big_integer("114575");
 	auto number2 = big_integer("78524");
 	auto result = number1 + number2; 
-	auto num_1 = big_integer("6459134876312645915375645915243562819842157684951435975462712564565467216417897215674812546818645 ");
-	auto num_2 = big_integer("5643269487 ");
+	auto num_1 = big_integer("6459134876312645915375645915243562819842157684951435975462712564565467216417897215674812546818645");
+	auto num_2 = big_integer("5643269487");
 	auto mult0 = num_1 * num_2;
 	std::cout << '\n' << result << std::endl; // 193099
 	std::cout << "mult_0: " << mult0 << std::endl;
